@@ -43,6 +43,17 @@ fun sampleCreateKValueVarUsage() {
     }
 }
 
+/**
+ * 包装一个 js 变量例子
+ */
+fun sampleWrapVarUsage() {
+    fastInject {
+        execJs("let cc = 520")
+        val valueRef = wrapVar("cc")
+        log("这是kotlin的包装结果：", valueRef)
+    }
+}
+
 fun sampleLogUsage() {
     fastInject {
         val valueRef = createVar("(100 + 10) / 50 + 1")
@@ -65,8 +76,30 @@ fun sampleAttributionUsage() {
     }
 }
 
+fun sampleExecuteJsUsage() {
+    fastInject {
+        execJs("let hello_world = 1)")
+        execJs("if (window.isReady)") {
+            val btn = find("#submit")
+            btn.click()
+        }
+        execJs("setTimeout(() =>", ", 1000)") {
+            val btn = find("#submit")
+            btn.click()
+        }
+    }
+}
+
 fun sampleExecuteIsolatedJsUsage() {
     fastInject {
         execIsolatedJs("let hello_world = 1)")
+        execIsolatedJs("if (window.isReady)") {
+            val btn = find("#submit")
+            btn.click()
+        }
+        execIsolatedJs("setTimeout(() =>", ", 1000)") {
+            val btn = find("#submit")
+            btn.click()
+        }
     }
 }

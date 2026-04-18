@@ -51,6 +51,27 @@ internal fun performExecuteIsolatedJs(scope: FastInjectScope, js: String) {
     """.trimIndent()
 }
 
+internal fun performExecuteIsolatedJs(
+    scope: FastInjectScope,
+    prefix: String,
+    block: FastInjectScope.() -> Unit
+) {
+    scope.execJs("(function() ", ")();") {
+        scope.execJs(prefix, block)
+    }
+}
+
+internal fun performExecuteIsolatedJs(
+    scope: FastInjectScope,
+    prefix: String,
+    suffix: String,
+    block: FastInjectScope.() -> Unit
+) {
+    scope.execJs("(function() ", ")();") {
+        scope.execJs(prefix, suffix, block)
+    }
+}
+
 /**
  * 向浏览器控制台打印日志
  * @param messages 可以是 Kotlin 的 [String]、[Int]，也可以是 [ElementRef] 或 [ValueRef] 等 [JsRef] 的子类

@@ -15,6 +15,7 @@
  */
 package com.czy4201b.fastinject.core.dsl
 
+import com.czy4201b.fastinject.core.model.ConditionRef
 import com.czy4201b.fastinject.core.model.DelayRef
 import com.czy4201b.fastinject.core.model.DomRef
 import com.czy4201b.fastinject.core.model.JsRef
@@ -61,6 +62,15 @@ class FastInjectScope {
     }
 
     /**
+     * 将自定义的变量名转换为可操作的 `FastInject` 可操作的 [ValueRef] 对象
+     *
+     * 如果需要使用对象，请使用 [execJs] 自定义
+     * @param varName js 变量表达式
+     * @sample com.czy4201b.fastinject.core.samples.sampleWrapVarUsage
+     */
+    fun wrapVar(varName: String): ValueRef = ValueRef(varName)
+
+    /**
      * [createVar] 的别名
      *
      * 创建js变量，并返回可操作的 `FastInject` 可操作的 [ValueRef] 对象
@@ -97,6 +107,89 @@ class FastInjectScope {
      * @sample com.czy4201b.fastinject.core.samples.sampleCreateVarUsage
      */
     fun kValOf(kValue: Any?) = createKVar(kValue)
+
+    /** 加 (+) */
+    operator fun ValueRef.plus(other: Any) = performOp(this@FastInjectScope, "+", other)
+
+    /** 减 (-) */
+    operator fun ValueRef.minus(other: Any) = performOp(this@FastInjectScope, "-", other)
+
+    /** 乘 (*) */
+    operator fun ValueRef.times(other: Any) = performOp(this@FastInjectScope, "*", other)
+
+    /** 除 (/) */
+    operator fun ValueRef.div(other: Any) = performOp(this@FastInjectScope, "/", other)
+
+    /** 求余 (%) */
+    operator fun ValueRef.rem(other: Any): ValueRef = performOp(this@FastInjectScope, "%", other)
+
+    /** 等于 (===) */
+    infix fun ValueRef.eq(other: Any) = performOp(this@FastInjectScope, "===", other)
+
+    /** 不等于 (!==)
+     * @sample com.czy4201b.fastinject.core.samples.sampleOperationUsage
+     */
+    infix fun ValueRef.neq(other: Any) = performOp(this@FastInjectScope, "!==", other)
+
+    /** 大于 (>) */
+    infix fun ValueRef.gt(other: Any) = performOp(this@FastInjectScope, ">", other)
+
+    /** 大于等于 (>=) */
+    infix fun ValueRef.ge(other: Any) = performOp(this@FastInjectScope, ">=", other)
+
+    /** 小于 (<) */
+    infix fun ValueRef.lt(other: Any) = performOp(this@FastInjectScope, "<", other)
+
+    /** 小于等于 (<=) */
+    infix fun ValueRef.le(other: Any) = performOp(this@FastInjectScope, "<=", other)
+
+    /** 逻辑与 (&&) */
+    infix fun ValueRef.and(other: Any) = performOp(this@FastInjectScope, "&&", other)
+
+    /** 逻辑或 (||) */
+    infix fun ValueRef.or(other: Any) = performOp(this@FastInjectScope, "||", other)
+
+    /**
+     * 执行条件分支逻辑
+     * @param condition 判断条件，支持 [ValueRef] 及其逻辑运算结果
+     * @param block 条件成立时执行的 DSL 逻辑
+     * @sample com.czy4201b.fastinject.core.samples.sampleConditionUsage
+     */
+    fun condition(condition: ValueRef, block: FastInjectScope.() -> Unit) =
+        performCondition(this@FastInjectScope, condition, block)
+
+    /**
+     * 执行条件分支逻辑（字符串形式）
+     * @param js 原生 JS 条件字符串
+     * @sample com.czy4201b.fastinject.core.samples.sampleConditionUsage
+     */
+    fun condition(js: String, block: FastInjectScope.() -> Unit) =
+        performCondition(this@FastInjectScope, js, block)
+
+    /**
+     * 执行else if条件分支逻辑
+     * @param condition 判断条件，支持 [ValueRef] 及其逻辑运算结果
+     * @param block 条件成立时执行的 DSL 逻辑
+     * @sample com.czy4201b.fastinject.core.samples.sampleConditionUsage
+     */
+    fun ConditionRef.otherWiseIf(condition: ValueRef, block: FastInjectScope.() -> Unit) =
+        performOtherwiseIf(this@FastInjectScope, condition, block)
+
+    /**
+     * 执行else if条件分支逻辑（字符串形式）
+     * @param js 原生 JS 条件字符串
+     * @sample com.czy4201b.fastinject.core.samples.sampleConditionUsage
+     */
+    fun ConditionRef.otherWiseIf(js: String, block: FastInjectScope.() -> Unit) =
+        performOtherwiseIf(this@FastInjectScope, js, block)
+
+    /**
+     * 执行else条件分支逻辑
+     * @param block 条件成立时执行的 DSL 逻辑
+     * @sample com.czy4201b.fastinject.core.samples.sampleConditionUsage
+     */
+    fun ConditionRef.otherWise(block: FastInjectScope.() -> Unit) =
+        performOtherwise(this@FastInjectScope, block)
 
     /**
      * 打印日志 (log 级别)
@@ -135,6 +228,7 @@ class FastInjectScope {
      *
      * 用于直接注入不带逻辑块的单行或多行 JS 代码
      * @param js 要插入的原始 JavaScript 字符串
+     * @sample com.czy4201b.fastinject.core.samples.sampleExecuteJsUsage
      */
     fun execJs(js: String) = performExecuteJs(this, js)
 
@@ -146,6 +240,7 @@ class FastInjectScope {
      * 常用于生成 `if`、`while` 或简单的匿名函数
      * @param prefix 代码块的前缀，例如 if (condition)
      * @param block 在大括号内部执行的 DSL 逻辑
+     * @sample com.czy4201b.fastinject.core.samples.sampleExecuteJsUsage
      */
     fun execJs(prefix: String, block: FastInjectScope.() -> Unit) =
         performExecuteJs(this, prefix, block)
@@ -159,6 +254,7 @@ class FastInjectScope {
      * @param prefix 块的前缀，例如 "setTimeout(function()"
      * @param suffix 块的后缀，例如 ", 500);"
      * @param block 在大括号内部执行的 DSL 逻辑
+     * @sample com.czy4201b.fastinject.core.samples.sampleExecuteJsUsage
      */
     fun execJs(prefix: String, suffix: String, block: FastInjectScope.() -> Unit) =
         performExecuteJs(this, prefix, suffix, block)
@@ -169,6 +265,37 @@ class FastInjectScope {
      * @sample com.czy4201b.fastinject.core.samples.sampleExecuteIsolatedJsUsage
      */
     fun execIsolatedJs(js: String) = performExecuteIsolatedJs(this, js)
+
+    /**
+     * 插入一段带大括号 `{ ... }` 的 JavaScript 代码块
+     *
+     * 生成的结构为：`prefix { block }`
+     *
+     * 常用于生成 `if`、`while` 或简单的匿名函数
+     *
+     * 运行在匿名函数中的js，不会污染全局变量，相对更加安全
+     * @param prefix 代码块的前缀，例如 if (condition)
+     * @param block 在大括号内部执行的 DSL 逻辑
+     * @sample com.czy4201b.fastinject.core.samples.sampleExecuteIsolatedJsUsage
+     */
+    fun execIsolatedJs(prefix: String, block: FastInjectScope.() -> Unit) =
+        performExecuteIsolatedJs(this, prefix, block)
+
+    /**
+     * 插入一段被前缀和后缀包裹的 JavaScript 代码块
+     *
+     * 生成的结构为：`prefix { block } suffix`
+     *
+     * 这是处理异步回调（如 `setTimeout` 或 `Promise.then`）的最通用方式
+     *
+     * 运行在匿名函数中的js，不会污染全局变量，相对更加安全
+     * @param prefix 代码块的前缀，例如 if (condition)
+     * @param suffix 块的后缀，例如 ", 500);"
+     * @param block 在大括号内部执行的 DSL 逻辑
+     * @sample com.czy4201b.fastinject.core.samples.sampleExecuteIsolatedJsUsage
+     */
+    fun execIsolatedJs(prefix: String, suffix: String, block: FastInjectScope.() -> Unit) =
+        performExecuteIsolatedJs(this, prefix, suffix, block)
 
 
     /* --------------------------------- DomActions ---------------------------------
@@ -218,11 +345,20 @@ class FastInjectScope {
         performFindAllElements(this, selector)
 
     /**
-     * 获取元素集合中第 `index` 个元素
+     * 使用静态索引获取元素集合中的特定元素
+     * @param index 固定的整数下标
      * @return [ElementRef] 查找到的第一个子元素引用
      */
     operator fun ElementsRef.get(index: Int): ElementRef =
         performGetElement(this@FastInjectScope, this, index)
+
+    /**
+     * 使用动态变量索引获取元素集合中的特定元素
+     * @param indexRef 运行时计算的下标引用 [ValueRef]
+     * @return [ElementRef] 查找到的第一个子元素引用
+     */
+    operator fun ElementsRef.get(indexRef: ValueRef): ElementRef =
+        performGetElement(this@FastInjectScope, this, indexRef)
 
     /**
      * 在当前元素范围内进行局部查找

@@ -44,6 +44,29 @@ internal fun performGetElement(
 }
 
 /**
+ * 获取数组元素
+ */
+internal fun performGetElement(
+    scope: FastInjectScope,
+    parent: ElementsRef,
+    indexRef: ValueRef
+): ElementRef {
+    // 生成 cacheKey 如果缓存有 就不创建了
+    val cacheKey = "${parent.varName}_fi_idx_${indexRef.varName}"
+
+    return scope.elementCache.getOrPut(cacheKey) {
+        val childVar = scope.nextElementId()
+        scope.jsFunc += """
+            const $childVar = ${parent.varName}[${indexRef.varName}];
+            if (!$childVar) {
+                console.warn('[FastInject] Index ' + ${indexRef.varName} + ' out of bounds for "${parent.selector}", length: ${parent.varName}.length');
+            }
+        """.trimIndent()
+        ElementRef(childVar, "${parent.selector}[${indexRef.varName}]")
+    }
+}
+
+/**
  * 获取数组长度
  */
 internal fun getElementsSize(scope: FastInjectScope, parent: ElementsRef): ValueRef {
