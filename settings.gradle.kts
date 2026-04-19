@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "FastInject"
 include(":fastinject-core")
 include(":fastinject-android")
+include(":example")
