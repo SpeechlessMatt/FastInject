@@ -20,8 +20,8 @@ import com.czy4201b.fastinject.core.fastInject
 
 fun sampleConditionUsage() {
     fastInject {
-        val num = kValOf(10)
-        val num2 = kValOf(50)
+        val num = kVarOf(10)
+        val num2 = kVarOf(50)
         condition(num gt num2) {
             log(num, "大于", num2)
         }.otherWiseIf(num eq num2) {
@@ -42,8 +42,8 @@ fun sampleConditionUsage() {
 
 fun sampleOperationUsage() {
     fastInject {
-        val num = kValOf(10)
-        val num2 = kValOf(20)
+        val num = kVarOf(10)
+        val num2 = kVarOf(20)
         val num3 = num + num2 - num * num2 / num % num2
         val bool1 = num neq num3
         val bool2 = num ge num3

@@ -15,6 +15,8 @@
  */
 package com.czy4201b.fastinject.core.dsl
 
+import com.czy4201b.fastinject.core.dsl.JsHelpers.MEGA_CLICK_HELPER
+import com.czy4201b.fastinject.core.dsl.JsHelpers.SIMULATE_INPUT_HELPER
 import com.czy4201b.fastinject.core.model.ElementRef
 import com.czy4201b.fastinject.core.model.ElementsRef
 import com.czy4201b.fastinject.core.model.ValueRef
@@ -33,12 +35,10 @@ internal fun performGetElement(
 
     return scope.elementCache.getOrPut(cacheKey) {
         val childVar = scope.nextElementId()
-        scope.jsFunc += """
-            const $childVar = ${parent.varName}[$index];
-            if (!$childVar) {
-                console.warn('[FastInject] Index $index out of bounds for "${parent.selector}", length: ${parent.varName}.length');
-            }
-        """.trimIndent()
+        scope.execJs("const $childVar = ${parent.varName}[$index];")
+        scope.condition("!$childVar") {
+            warn("Index $index out of bounds for", parent.selector.toJsLiteral(), ", length:", "${parent.varName}.length")
+        }
         ElementRef(childVar, "${parent.selector}[$index]")
     }
 }
@@ -56,12 +56,10 @@ internal fun performGetElement(
 
     return scope.elementCache.getOrPut(cacheKey) {
         val childVar = scope.nextElementId()
-        scope.jsFunc += """
-            const $childVar = ${parent.varName}[${indexRef.varName}];
-            if (!$childVar) {
-                console.warn('[FastInject] Index ' + ${indexRef.varName} + ' out of bounds for "${parent.selector}", length: ${parent.varName}.length');
-            }
-        """.trimIndent()
+        scope.execJs("const $childVar = ${parent.varName}[${indexRef.varName}];")
+        scope.condition("!$childVar") {
+            warn("Index", indexRef, "out of bounds for", parent.selector.toJsLiteral(), "length: ${parent.varName}.length")
+        }
         ElementRef(childVar, "${parent.selector}[${indexRef.varName}]")
     }
 }
@@ -71,9 +69,7 @@ internal fun performGetElement(
  */
 internal fun getElementsSize(scope: FastInjectScope, parent: ElementsRef): ValueRef {
     val sizeVar = scope.nextValueId()
-    scope.jsFunc += """
-        const $sizeVar = ${parent.varName}.length;
-    """.trimIndent()
+    scope.execJs("const $sizeVar = ${parent.varName}.length;")
 
     return ValueRef(sizeVar)
 }
@@ -87,12 +83,10 @@ internal fun performFindElement(
     selector: String
 ): ElementRef {
     val elementVar = scope.nextElementId()
-    scope.jsFunc += """
-        const $elementVar = ${parent.varName}.querySelector("$selector");
-        if (!$elementVar) {
-            console.warn('[FastInject] Element ${parent.varName}.querySelector("$selector") does not exist in JS context!');
-        }
-    """.trimIndent()
+    scope.execJs("const $elementVar = ${parent.varName}.querySelector(${selector.toJsLiteral()});")
+    scope.condition("!$elementVar") {
+        warn("Element ${parent.varName}.querySelector(", selector, ") does not exist in JS context!")
+    }
 
     return ElementRef(elementVar, selector)
 }
@@ -105,12 +99,10 @@ internal fun performFindElement(
     selector: String
 ): ElementRef {
     val elementVar = scope.nextElementId()
-    scope.jsFunc += """
-        const $elementVar = document.querySelector("$selector");
-        if (!$elementVar) {
-            console.warn('[FastInject] Element document.querySelector("$selector") does not exist in JS context!');
-        }
-    """.trimIndent()
+    scope.execJs("const $elementVar = document.querySelector(${selector.toJsLiteral()});")
+    scope.condition("!$elementVar") {
+        warn("Element document.querySelector(", selector, ") does not exist in JS context!")
+    }
 
     return ElementRef(elementVar, selector)
 }
@@ -124,12 +116,10 @@ internal fun performFindAllElements(
     selector: String
 ): ElementsRef {
     val elementVar = scope.nextElementId()
-    scope.jsFunc += """
-        const $elementVar = ${parent.varName}.querySelectorAll("$selector");
-        if (!$elementVar) {
-            console.warn('[FastInject] Element ${parent.varName}.querySelectorAll("$selector") does not exist in JS context!');
-        }
-    """.trimIndent()
+    scope.execJs("const $elementVar = ${parent.varName}.querySelectorAll(${selector.toJsLiteral()});")
+    scope.condition("!$elementVar") {
+        warn("Element ${parent.varName}.querySelectorAll(", selector, ") does not exist in JS context!")
+    }
 
     return ElementsRef(elementVar, selector)
 }
@@ -142,12 +132,10 @@ internal fun performFindAllElements(
     selector: String
 ): ElementsRef {
     val elementVar = scope.nextElementId()
-    scope.jsFunc += """
-        const $elementVar = document.querySelectorAll("$selector");
-        if (!$elementVar) {
-            console.warn('[FastInject] Element document.querySelectorAll("$selector") does not exist in JS context!');
-        }
-    """.trimIndent()
+    scope.execJs("const $elementVar = document.querySelectorAll(${selector.toJsLiteral()});")
+    scope.condition("!$elementVar") {
+        warn("Element document.querySelectorAll(", selector, ") does not exist in JS context!")
+    }
 
     return ElementsRef(elementVar, selector)
 }
@@ -162,17 +150,18 @@ internal fun performWrapElement(
     varName: String,
     selectorHint: String? = null
 ): ElementRef {
-    scope.jsFunc += """
-        (function(){
-            try {
-                if (typeof $varName === 'undefined') {
-                    console.error('[FastInject] Variable "$varName" does not exist in JS context!');
-                }
-            } catch (e) {
-                console.error('[FastInject] wrapElement("$varName") failed: ' + e);
+    // (function(){})();
+    scope.execJs("(function()", ")();") {
+        // try
+        execJs("try") {
+            condition("typeof $varName === 'undefined' || $varName === null") {
+                error("Variable", varName, "does not exist in JS context!")
             }
-        })();
-    """.trimIndent()
+        }
+        execJs("catch (e)") {
+            error("wrapElement(", varName, ") failed: ", wrapVar("e"))
+        }
+    }
 
     return ElementRef(varName, selectorHint ?: "[External Elements]")
 }
@@ -187,17 +176,18 @@ internal fun performWrapElements(
     varName: String,
     selectorHint: String? = null
 ): ElementsRef {
-    scope.jsFunc += """
-        (function(){
-            try {
-                if (typeof $varName === 'undefined') {
-                    console.error('[FastInject] Variable "$varName" does not exist in JS context!');
-                }
-            } catch (e) {
-                console.error('[FastInject] wrapElement("$varName") failed: ' + e);
+    // (function(){})();
+    scope.execJs("(function()", ")();") {
+        // try
+        execJs("try") {
+            condition("typeof $varName === 'undefined' || $varName === null") {
+                error("Variable", varName, "does not exist in JS context!")
             }
-        })();
-    """.trimIndent()
+        }
+        execJs("catch (e)") {
+            error("wrapElements(", varName, ") failed: ", wrapVar("e"))
+        }
+    }
 
     return ElementsRef(varName, selectorHint ?: "[External Elements]")
 }
@@ -210,20 +200,14 @@ internal fun performForEach(
     parent: ElementsRef,
     block: FastInjectScope.(ElementRef) -> Unit
 ) {
-    val countVar = scope.nextValueId()
     val elementVar = scope.nextElementId()
     val indexVar = "_fi_idx_${scope.nextValueId()}"
 
-    scope.jsFunc += """
-        const $countVar = ${parent.varName}.length;
-        for (let $indexVar = 0; $indexVar < $countVar; $indexVar++) {
-            const $elementVar = ${parent.varName}[$indexVar];
-    """.trimIndent()
-
-    val loopRef = ElementRef(elementVar, "${parent.selector}[$indexVar]")
-    scope.block(loopRef)
-
-    scope.jsFunc += "}\n"
+    scope.execJs("for (let $indexVar = 0; $indexVar < ${parent.varName}.length; $indexVar++)") {
+        execJs("const $elementVar = ${parent.varName}[$indexVar];")
+        val loopRef = ElementRef(elementVar, "${parent.selector}[$indexVar]")
+        block(loopRef)
+    }
 }
 
 /**
@@ -234,21 +218,35 @@ internal fun performForEachIndexed(
     parent: ElementsRef,
     block: FastInjectScope.(ElementRef, ValueRef) -> Unit
 ) {
-    val countVar = scope.nextValueId()
     val elementVar = scope.nextElementId()
     val indexVar = "_fi_idx_${scope.nextValueId()}"
 
-    scope.jsFunc += """
-        const $countVar = ${parent.varName}.length;
-        for (let $indexVar = 0; $indexVar < $countVar; $indexVar++) {
-            const $elementVar = ${parent.varName}[$indexVar];
-    """.trimIndent()
+    scope.execJs("for (let $indexVar = 0; $indexVar < ${parent.varName}.length; $indexVar++)") {
+        execJs("const $elementVar = ${parent.varName}[$indexVar];")
+        val loopRef = ElementRef(elementVar, "${parent.selector}[$indexVar]")
+        val indexRef = ValueRef(indexVar)
+        block(loopRef, indexRef)
+    }
+}
 
-    val loopRef = ElementRef(elementVar, "${parent.selector}[$indexVar]")
-    val indexRef = ValueRef(indexVar)
-    scope.block(loopRef, indexRef)
+internal fun performInput(scope: FastInjectScope, parent: ElementRef, textRef: ValueRef) {
+    // (function() {})();
+    scope.execJs("(function()", ")();") {
+        execJs("const el = ${parent.varName};")
+        condition("!el") {
+            error("Element", parent.varName, "does not exist in JS context!")
+            // return to end the (function() {})();
+            execJs("return;")
+        }
+        execJs("el.value = ${textRef.varName};")
+        execJs("el.dispatchEvent(new Event('input', { bubbles: true }));")
+        execJs("el.dispatchEvent(new Event('change', { bubbles: true }));")
+    }
+}
 
-    scope.jsFunc += "}\n"
+internal fun performInput(scope: FastInjectScope, parent: ElementRef, text: String) {
+    val textRef = scope.kVarOf(text)
+    performInput(scope, parent, textRef)
 }
 
 /**
@@ -256,43 +254,8 @@ internal fun performForEachIndexed(
  * @param textRef 拥有 String 的valueRef
  */
 internal fun performSimulateInput(scope: FastInjectScope, parent: ElementRef, textRef: ValueRef) {
-    scope.jsFunc += """
-        (function() {
-            const el = ${parent.varName};
-            if (!el) {
-                console.error('[FastInject] Element ${parent.varName} does not exist in JS context!');
-                return;
-            }
-            
-            (function (el, value) {
-                if (!el) return;
-    
-                el.focus(); // 保证组件内部 focus 逻辑生效
-    
-                // 清空并准备 tracker
-                const lastValue = el.value;
-                el.value = '';
-    
-                const tracker = el._valueTracker;
-                if (tracker) tracker.setValue(lastValue);
-    
-                // 模拟中文输入（IME）
-                el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, composed: true }));
-    
-                // 填入值
-                el.value = value;
-    
-                el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, composed: true, data: value }));
-    
-                // 触发 React/Vue 的 input 事件
-                el.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true, data: value, inputType: 'insertText' }));
-    
-                // 触发 change + blur 保证校验逻辑触发
-                el.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-                el.blur();
-            })(el, ${textRef.varName});
-        })();
-    """.trimIndent()
+    scope.ensureHelper("SimulateInputHelper", SIMULATE_INPUT_HELPER)
+    scope.execJs("window.fastInjectSimulateInput(${parent.varName}, ${textRef.varName});")
 }
 
 /**
@@ -300,56 +263,26 @@ internal fun performSimulateInput(scope: FastInjectScope, parent: ElementRef, te
  * @param text 输入的文本
  */
 internal fun performSimulateInput(scope: FastInjectScope, parent: ElementRef, text: String) {
-    val escaped = text.toJsLiteral()
-
-    scope.jsFunc += """
-        (function() {
-            const el = ${parent.varName};
-            if (!el) {
-                console.error('[FastInject] Element ${parent.varName} does not exist in JS context!');
-                return;
-            }
-            
-            (function (el, value) {
-                if (!el) return;
-    
-                el.focus(); // 保证组件内部 focus 逻辑生效
-    
-                // 清空并准备 tracker
-                const lastValue = el.value;
-                el.value = '';
-    
-                const tracker = el._valueTracker;
-                if (tracker) tracker.setValue(lastValue);
-    
-                // 模拟中文输入（IME）
-                el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, composed: true }));
-    
-                // 填入值
-                el.value = value;
-    
-                el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, composed: true, data: value }));
-    
-                // 触发 React/Vue 的 input 事件
-                el.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true, data: value, inputType: 'insertText' }));
-    
-                // 触发 change + blur 保证校验逻辑触发
-                el.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
-                el.blur();
-            })(el, $escaped);
-        })();
-    """.trimIndent()
+    val textRef = scope.kVarOf(text)
+    performSimulateInput(scope, parent, textRef)
 }
 
 internal fun performClick(scope: FastInjectScope, parent: ElementRef) {
-    scope.jsFunc += """
-        (function() {
-            const el = ${parent.varName};
-            if (!el) {
-                console.error('[FastInject] Element ${parent.varName} does not exist in JS context!');
-                return;
-            }
-    """.trimIndent()
+    // (function() {})();
+    scope.execJs("(function()", ")();") {
+        execJs("const el = ${parent.varName};")
+        condition("!el") {
+            error("Element", parent.varName, "does not exist in JS context!")
+            // return to end the (function() {})();
+            execJs("return;")
+        }
+        execJs("el.click();")
+    }
+}
+
+internal fun performMegaClick(scope: FastInjectScope, parent: ElementRef) {
+    scope.ensureHelper("MegaClickHelper", MEGA_CLICK_HELPER)
+    scope.execJs("window.fastInjectMegaClick(${parent.varName});")
 }
 
 /**
@@ -368,7 +301,7 @@ internal fun performIfElementExists(
     parent: ElementRef,
     block: FastInjectScope.(ElementRef) -> Unit
 ) {
-    scope.jsFunc += "if (${parent.varName}) {"
-    scope.block(parent)
-    scope.jsFunc += "\n}"
+    scope.condition(parent.varName) {
+        block(parent)
+    }
 }

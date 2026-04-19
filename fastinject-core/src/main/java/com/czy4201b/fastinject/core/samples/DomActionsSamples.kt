@@ -25,6 +25,7 @@ fun sampleFindUsage() {
     fastInject {
         val container = find("css-main-container")
         container.click()
+        container.megaClick()
     }
 }
 
@@ -64,6 +65,21 @@ fun sampleElementFindAllUsage() {
         subContainer.forEach {
             it.click()
         }
+    }
+}
+
+fun sampleElementInputUsage() {
+    fastInject {
+        val container = find("css-main-container")
+        container.input("hello")
+    }
+}
+
+fun sampleElementInputRefUsage() {
+    fastInject {
+        val container = find("css-main-container")
+        val inputValue = wrapVar("inputValue")
+        container.input(inputValue)
     }
 }
 

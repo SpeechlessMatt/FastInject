@@ -68,7 +68,7 @@ class FastInjectScope {
      * @param varName js 变量表达式
      * @sample com.czy4201b.fastinject.core.samples.sampleWrapVarUsage
      */
-    fun wrapVar(varName: String): ValueRef = ValueRef(varName)
+    fun wrapVar(varName: String): ValueRef = performWrapValue(this@FastInjectScope, varName)
 
     /**
      * [createVar] 的别名
@@ -80,7 +80,7 @@ class FastInjectScope {
      * @param jsExpression js 变量表达式
      * @sample com.czy4201b.fastinject.core.samples.sampleCreateVarUsage
      */
-    fun valOf(jsExpression: String) = createVar(jsExpression)
+    fun varOf(jsExpression: String) = createVar(jsExpression)
 
     /**
      * 创建js变量，并返回可操作的 `FastInject` 可操作的 [ValueRef] 对象
@@ -106,7 +106,13 @@ class FastInjectScope {
      * @param kValue kotlin 变量
      * @sample com.czy4201b.fastinject.core.samples.sampleCreateVarUsage
      */
-    fun kValOf(kValue: Any?) = createKVar(kValue)
+    fun kVarOf(kValue: Any?) = createKVar(kValue)
+
+    operator fun ValueRef.get(key: ValueRef): ValueRef =
+        wrapVar("${this.varName}[${key.varName}]")
+
+    operator fun ValueRef.get(key: String): ValueRef =
+        wrapVar("${this.varName}['$key']")
 
     /** 加 (+) */
     operator fun ValueRef.plus(other: Any) = performOp(this@FastInjectScope, "+", other)
@@ -206,6 +212,14 @@ class FastInjectScope {
      */
     fun warn(vararg messages: Any) =
         performLog(this@FastInjectScope, messages, "warn")
+
+    /**
+     * 打印日志 (error 级别)
+     * @param messages 可以是 Kotlin 的 [String]、[Int]，也可以是 [ElementRef] 或 [ValueRef] 等 [JsRef] 的子类
+     * @sample com.czy4201b.fastinject.core.samples.sampleLogUsage
+     */
+    fun error(vararg messages: Any) =
+        performLog(this@FastInjectScope, messages, "error")
 
     /**
      * 打印日志 (info 级别)
@@ -402,6 +416,28 @@ class FastInjectScope {
      * @sample com.czy4201b.fastinject.core.samples.sampleFindUsage
      */
     fun ElementRef.click() = performClick(this@FastInjectScope, this)
+
+    /**
+     * 强制点击行为：修改不可点击的样式强制允许点击，穿透点击到父控件，父级目标追溯，全点击序列模拟
+     * @sample com.czy4201b.fastinject.core.samples.sampleFindUsage
+     */
+    fun ElementRef.megaClick() = performMegaClick(this@FastInjectScope, this)
+
+    /**
+     * 模拟用户输入行为
+     * @param text 输入的文本
+     * @sample com.czy4201b.fastinject.core.samples.sampleElementInputUsage
+     */
+    fun ElementRef.input(text: String) =
+        performInput(this@FastInjectScope, this, text)
+
+    /**
+     * 模拟用户输入行为
+     * @param textRef 指向js字符串的 [ValueRef]
+     * @sample com.czy4201b.fastinject.core.samples.sampleElementInputRefUsage
+     */
+    fun ElementRef.input(textRef: ValueRef) =
+        performInput(this@FastInjectScope, this, textRef)
 
     /**
      * 模拟人手输入：可以解决大部分普通 `input` 无法解决的问题

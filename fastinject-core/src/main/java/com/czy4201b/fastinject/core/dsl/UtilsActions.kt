@@ -21,13 +21,12 @@ fun performDisableTimeCheck(scope: FastInjectScope, toDate: Long) {
 }
 
 fun performRestoreTimeCheck(scope: FastInjectScope) {
-    scope.execJs("""
-        (function(){
-            if (window.fastInjectRestoreDate) {
-                window.fastInjectRestoreDate();
-            } else {
-                console.warn('[FastInject] No Date hack found to restore');
-            }
-        })();
-    """.trimIndent())
+    // (function() {})();
+    scope.execJs("(function()", ")();") {
+        condition("window.fastInjectRestoreDate") {
+            execJs("window.fastInjectRestoreDate();")
+        }.otherWise {
+            warn("[FastInject] No Date hack found to restore")
+        }
+    }
 }

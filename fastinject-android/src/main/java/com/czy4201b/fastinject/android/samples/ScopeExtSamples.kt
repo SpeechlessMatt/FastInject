@@ -21,7 +21,7 @@ import com.czy4201b.fastinject.core.fastInject
 
 fun sampleEmitUsage() {
     fastInject {
-        val value = valOf("1 + 1")
+        val value = varOf("1 + 1")
         emit("get result: ", value)
     }
 }

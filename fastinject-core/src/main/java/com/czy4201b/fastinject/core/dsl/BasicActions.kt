@@ -18,6 +18,7 @@ package com.czy4201b.fastinject.core.dsl
 import com.czy4201b.fastinject.core.model.ElementRef
 import com.czy4201b.fastinject.core.model.ValueRef
 import com.czy4201b.fastinject.core.model.JsRef
+import com.czy4201b.fastinject.core.utils.toJsLiteral
 
 
 internal fun performExecuteJs(scope: FastInjectScope, js: String) {
@@ -81,10 +82,7 @@ internal fun performLog(scope: FastInjectScope, messages: Array<out Any>, level:
         when (msg) {
             is ElementRef -> msg.varName
             is ValueRef -> msg.varName
-            else -> {
-                val escaped = msg.toString().replace("'", "\\'")
-                "'$escaped'"
-            }
+            else -> msg.toString().toJsLiteral()
         }
     }
     scope.execJs("console.$level('[FastInject] ', $jsArgs);")

@@ -65,31 +65,118 @@ internal object JsHelpers {
     """.trimIndent()
 
     val TIME_HELPER = """
-            window.fastInjectWaitForElement = function(selector, ms) {
-                return new Promise(function (resolve, reject) {
-                    var start = Date.now();
-    
-                    var el = document.querySelector(selector);
-                    if (el) { resolve(el); return; }
-    
-                    var ob = new MutationObserver(function () {
-                        var el2 = document.querySelector(selector);
-                        if (el2) {
-                            ob.disconnect();
-                            resolve(el2);
-                        } else if (Date.now() - start > ms) {
-                            ob.disconnect();
-                            reject('超时未找到 ' + selector);
-                        }
-                    });
-    
-                    ob.observe(document.body, { childList: true, subtree: true });
-    
-                    setTimeout(function () {
+        window.fastInjectWaitForElement = function(selector, ms) {
+            return new Promise(function (resolve, reject) {
+                var start = Date.now();
+
+                var el = document.querySelector(selector);
+                if (el) { resolve(el); return; }
+
+                var ob = new MutationObserver(function () {
+                    var el2 = document.querySelector(selector);
+                    if (el2) {
+                        ob.disconnect();
+                        resolve(el2);
+                    } else if (Date.now() - start > ms) {
                         ob.disconnect();
                         reject('超时未找到 ' + selector);
-                    }, ms);
+                    }
                 });
+
+                ob.observe(document.body, { childList: true, subtree: true });
+
+                setTimeout(function () {
+                    ob.disconnect();
+                    reject('超时未找到 ' + selector);
+                }, ms);
+            });
+        };
+    """.trimIndent()
+
+    val SIMULATE_INPUT_HELPER = """
+        window.fastInjectSimulateInput = function(el, value) {
+            if (!el) {
+                console.error('[FastInject] Target Element does not exist in JS context!');
+                return;
+            }
+            
+            (function (el, value) {
+                if (!el) return;
+    
+                el.focus(); // 保证组件内部 focus 逻辑生效
+    
+                // 清空并准备 tracker
+                const lastValue = el.value;
+                el.value = '';
+    
+                const tracker = el._valueTracker;
+                if (tracker) tracker.setValue(lastValue);
+    
+                // 模拟中文输入（IME）
+                el.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, composed: true }));
+    
+                // 填入值
+                el.value = value;
+    
+                el.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, composed: true, data: value }));
+    
+                // 触发 React/Vue 的 input 事件
+                el.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true, data: value, inputType: 'insertText' }));
+    
+                // 触发 change + blur 保证校验逻辑触发
+                el.dispatchEvent(new Event('change', { bubbles: true, composed: true }));
+                el.blur();
+            })(el, value);
+        };
+    """.trimIndent()
+
+    val MEGA_CLICK_HELPER = """
+        window.fastInjectMegaClick = function (el) {
+            if (!el) return;
+
+            const originalStyle = el.style.pointerEvents;
+            el.style.pointerEvents = 'auto';
+            el.style.setProperty('pointer-events', 'auto', 'important');
+            
+            if (el.hasAttribute('disabled')) {
+                el.removeAttribute('disabled');
+                el.disabled = false;
+            }
+
+            const rect = el.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+
+            const topEl = document.elementFromPoint(x, y) || el;
+
+            const clickable = topEl.closest('button, a, [role="button"], [onclick], input, summary') || topEl;
+
+            const common = {
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+                view: window,
+                clientX: x,
+                clientY: y,
+                buttons: 1
             };
-        """.trimIndent()
+
+            const sequence = [
+                new PointerEvent('pointerdown', { ...common, pointerType: 'mouse' }),
+                new MouseEvent('mousedown', common),
+                new PointerEvent('pointerup', { ...common, pointerType: 'mouse' }),
+                new MouseEvent('mouseup', common),
+                new MouseEvent('click', common)
+            ];
+
+            if (typeof clickable.focus === 'function') clickable.focus();
+            
+            sequence.forEach(evt => {
+                clickable.dispatchEvent(evt);
+                if (topEl !== clickable) topEl.dispatchEvent(evt);
+            });
+
+            // el.style.pointerEvents = originalStyle;
+        };
+    """.trimIndent()
 }

@@ -19,6 +19,7 @@ import com.czy4201b.fastinject.core.model.DelayRef
 import com.czy4201b.fastinject.core.model.ElementRef
 import com.czy4201b.fastinject.core.model.TimeRef
 import com.czy4201b.fastinject.core.dsl.JsHelpers.TIME_HELPER
+import com.czy4201b.fastinject.core.utils.toJsLiteral
 
 
 internal fun performSetTimeOut(ms: Int): DelayRef {
@@ -30,7 +31,7 @@ internal fun DelayRef.performSetTimeOutThen(
     block: FastInjectScope.() -> Unit
 ) {
     scope.execJs("setTimeout(function()", ", ${this.ms});") {
-        scope.block()
+        block()
     }
 }
 
@@ -47,10 +48,10 @@ internal fun TimeRef.performWaitElementThen(
     val elementRef = ElementRef(varName, selector)
 
     scope.execJs(
-        prefix = "window.fastInjectWaitForElement(\"$selector\", $ms).then(el =>",
+        prefix = "window.fastInjectWaitForElement(${selector.toJsLiteral()}, $ms).then(el =>",
         suffix = ").catch(err => console.error('[FastInject] ' + err));"
     ) {
         execJs("const $varName = el;")
-        scope.block(elementRef)
+        block(elementRef)
     }
 }

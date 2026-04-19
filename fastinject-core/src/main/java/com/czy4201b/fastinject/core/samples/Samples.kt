@@ -23,7 +23,7 @@ import com.czy4201b.fastinject.core.fastInject
 fun sampleCreateVarUsage() {
     fastInject {
         val valueRef = createVar("(100 + 10) / 50 + 1")
-        val valueRef2 = valOf("1 + 1")
+        val valueRef2 = varOf("1 + 1")
         log("这是js的计算结果: ", valueRef)
         log("这是js的计算结果: ", valueRef2)
     }
@@ -38,7 +38,7 @@ fun sampleCreateKValueVarUsage() {
         val kInt = 100 + 10 - 60
         // 两种写法是等价的
         val valueRef = createKVar(kString)
-        val valueRef2 = kValOf(kInt)
+        val valueRef2 = kVarOf(kInt)
         log(valueRef, "这是kotlin的计算结果：", valueRef2)
     }
 }
@@ -59,6 +59,7 @@ fun sampleLogUsage() {
         val valueRef = createVar("(100 + 10) / 50 + 1")
         log("这是一个日志，这是我的计算结果：", valueRef)
         warn("这是一个日志，这是我的计算结果：", valueRef)
+        error("这是一个日志，这是我的计算结果：", valueRef)
         info("这是一个日志，这是我的计算结果：", valueRef)
         trace("这是一个日志，这是我的计算结果：", valueRef)
     }

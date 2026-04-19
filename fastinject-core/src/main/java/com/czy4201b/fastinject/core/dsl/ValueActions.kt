@@ -20,6 +20,29 @@ import com.czy4201b.fastinject.core.model.ValueRef
 
 
 /**
+ * 将自定义的变量名转换为FastInject可操作的ValueRef对象
+ * @param varName 变量名字
+ */
+internal fun performWrapValue(
+    scope: FastInjectScope,
+    varName: String,
+): ValueRef {
+    scope.jsFunc += """
+        (function(){
+            try {
+                if (typeof $varName === 'undefined') {
+                    console.error('[FastInject] Variable "$varName" does not exist in JS context!');
+                }
+            } catch (e) {
+                console.error('[FastInject] wrapVal("$varName") failed: ' + e);
+            }
+        })();
+    """.trimIndent()
+
+    return ValueRef(varName)
+}
+
+/**
  * 基础计算执行器
  */
 internal fun ValueRef.performOp(scope: FastInjectScope, op: String, other: Any): ValueRef {
