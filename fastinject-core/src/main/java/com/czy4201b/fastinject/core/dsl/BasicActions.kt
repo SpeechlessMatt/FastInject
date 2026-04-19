@@ -52,24 +52,9 @@ internal fun performExecuteIsolatedJs(scope: FastInjectScope, js: String) {
     """.trimIndent()
 }
 
-internal fun performExecuteIsolatedJs(
-    scope: FastInjectScope,
-    prefix: String,
-    block: FastInjectScope.() -> Unit
-) {
+internal fun performExecuteIsolatedJs(scope: FastInjectScope, block: FastInjectScope.() -> Unit) {
     scope.execJs("(function() ", ")();") {
-        scope.execJs(prefix, block)
-    }
-}
-
-internal fun performExecuteIsolatedJs(
-    scope: FastInjectScope,
-    prefix: String,
-    suffix: String,
-    block: FastInjectScope.() -> Unit
-) {
-    scope.execJs("(function() ", ")();") {
-        scope.execJs(prefix, suffix, block)
+        block()
     }
 }
 

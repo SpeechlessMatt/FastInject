@@ -5,8 +5,9 @@ import java.io.File
 
 fun main() {
     val js = fastInject {
+        disableTimeCheck(1779201313000)
         waitElement("container", 5000).then {
-            it.click()
+            it.megaClick()
         }
     }
 

@@ -150,8 +150,7 @@ internal fun performWrapElement(
     varName: String,
     selectorHint: String? = null
 ): ElementRef {
-    // (function(){})();
-    scope.execJs("(function()", ")();") {
+    scope.execIsolatedJs {
         // try
         execJs("try") {
             condition("typeof $varName === 'undefined' || $varName === null") {
@@ -176,8 +175,7 @@ internal fun performWrapElements(
     varName: String,
     selectorHint: String? = null
 ): ElementsRef {
-    // (function(){})();
-    scope.execJs("(function()", ")();") {
+    scope.execIsolatedJs {
         // try
         execJs("try") {
             condition("typeof $varName === 'undefined' || $varName === null") {
@@ -230,8 +228,7 @@ internal fun performForEachIndexed(
 }
 
 internal fun performInput(scope: FastInjectScope, parent: ElementRef, textRef: ValueRef) {
-    // (function() {})();
-    scope.execJs("(function()", ")();") {
+    scope.execIsolatedJs {
         execJs("const el = ${parent.varName};")
         condition("!el") {
             error("Element", parent.varName, "does not exist in JS context!")
@@ -255,7 +252,7 @@ internal fun performInput(scope: FastInjectScope, parent: ElementRef, text: Stri
  */
 internal fun performSimulateInput(scope: FastInjectScope, parent: ElementRef, textRef: ValueRef) {
     scope.ensureHelper("SimulateInputHelper", SIMULATE_INPUT_HELPER)
-    scope.execJs("window.fastInjectSimulateInput(${parent.varName}, ${textRef.varName});")
+    scope.execJs("fi_ctx.fastInjectSimulateInput(${parent.varName}, ${textRef.varName});")
 }
 
 /**
@@ -268,8 +265,7 @@ internal fun performSimulateInput(scope: FastInjectScope, parent: ElementRef, te
 }
 
 internal fun performClick(scope: FastInjectScope, parent: ElementRef) {
-    // (function() {})();
-    scope.execJs("(function()", ")();") {
+    scope.execIsolatedJs {
         execJs("const el = ${parent.varName};")
         condition("!el") {
             error("Element", parent.varName, "does not exist in JS context!")
@@ -282,7 +278,7 @@ internal fun performClick(scope: FastInjectScope, parent: ElementRef) {
 
 internal fun performMegaClick(scope: FastInjectScope, parent: ElementRef) {
     scope.ensureHelper("MegaClickHelper", MEGA_CLICK_HELPER)
-    scope.execJs("window.fastInjectMegaClick(${parent.varName});")
+    scope.execJs("fi_ctx.fastInjectMegaClick(${parent.varName});")
 }
 
 /**
@@ -290,6 +286,14 @@ internal fun performMegaClick(scope: FastInjectScope, parent: ElementRef) {
  */
 internal fun getElementText(scope: FastInjectScope, parent: ElementRef): ValueRef {
     val newVar = scope.createVar("${parent.varName}.textContent")
+    return newVar
+}
+
+/**
+ * 获取元素的值，相当于document.querySelector(selector).value
+ */
+internal fun getElementValue(scope: FastInjectScope, parent: ElementRef): ValueRef {
+    val newVar = scope.createVar("${parent.varName}.value")
     return newVar
 }
 

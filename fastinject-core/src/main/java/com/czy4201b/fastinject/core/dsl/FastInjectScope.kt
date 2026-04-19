@@ -281,35 +281,11 @@ class FastInjectScope {
     fun execIsolatedJs(js: String) = performExecuteIsolatedJs(this, js)
 
     /**
-     * 插入一段带大括号 `{ ... }` 的 JavaScript 代码块
-     *
-     * 生成的结构为：`prefix { block }`
-     *
-     * 常用于生成 `if`、`while` 或简单的匿名函数
-     *
      * 运行在匿名函数中的js，不会污染全局变量，相对更加安全
-     * @param prefix 代码块的前缀，例如 if (condition)
      * @param block 在大括号内部执行的 DSL 逻辑
      * @sample com.czy4201b.fastinject.core.samples.sampleExecuteIsolatedJsUsage
      */
-    fun execIsolatedJs(prefix: String, block: FastInjectScope.() -> Unit) =
-        performExecuteIsolatedJs(this, prefix, block)
-
-    /**
-     * 插入一段被前缀和后缀包裹的 JavaScript 代码块
-     *
-     * 生成的结构为：`prefix { block } suffix`
-     *
-     * 这是处理异步回调（如 `setTimeout` 或 `Promise.then`）的最通用方式
-     *
-     * 运行在匿名函数中的js，不会污染全局变量，相对更加安全
-     * @param prefix 代码块的前缀，例如 if (condition)
-     * @param suffix 块的后缀，例如 ", 500);"
-     * @param block 在大括号内部执行的 DSL 逻辑
-     * @sample com.czy4201b.fastinject.core.samples.sampleExecuteIsolatedJsUsage
-     */
-    fun execIsolatedJs(prefix: String, suffix: String, block: FastInjectScope.() -> Unit) =
-        performExecuteIsolatedJs(this, prefix, suffix, block)
+    fun execIsolatedJs(block: FastInjectScope.() -> Unit) = performExecuteIsolatedJs(this, block)
 
 
     /* --------------------------------- DomActions ---------------------------------
@@ -323,6 +299,14 @@ class FastInjectScope {
      * @sample com.czy4201b.fastinject.core.samples.sampleAttributionUsage
      */
     val ElementsRef.size: ValueRef get() = getElementsSize(this@FastInjectScope, this)
+
+    /**
+     * 获取元素的值 (例如 TextField 的内容)
+     * @receiver [ElementsRef] 目标集合引用
+     * @return [ValueRef] 指向 JS 侧 `length` 属性的实时变量引用
+     * @sample com.czy4201b.fastinject.core.samples.sampleAttributionUsage
+     */
+    val ElementRef.value: ValueRef get() = getElementValue(this@FastInjectScope, this)
 
     /**
      * 获取元素的文本内容 (含 HTML 标签内的纯文字)
@@ -562,7 +546,13 @@ class FastInjectScope {
         }
 
         // 将所有 DSL 收集的 JavaScript 拼成一个脚本
-        val finalJs = "(function() {\n${jsFunc.joinToString("\n")}\n})();"
+        val finalJs = """
+            (function() {
+                const fi_ctx = {};
+                
+                ${jsFunc.joinToString("\n")}
+            })();
+        """.trimIndent()
         return finalJs
     }
 }

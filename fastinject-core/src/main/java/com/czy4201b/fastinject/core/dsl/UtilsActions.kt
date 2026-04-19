@@ -17,14 +17,13 @@ package com.czy4201b.fastinject.core.dsl
 
 fun performDisableTimeCheck(scope: FastInjectScope, toDate: Long) {
     scope.ensureHelper("TimeCheckHelper", JsHelpers.TIME_CHECK_HELPER)
-    scope.execJs("window.fastHookDate($toDate);")
+    scope.execJs("fi_ctx.fastInjectTimeCheckHelper($toDate);")
 }
 
 fun performRestoreTimeCheck(scope: FastInjectScope) {
-    // (function() {})();
-    scope.execJs("(function()", ")();") {
-        condition("window.fastInjectRestoreDate") {
-            execJs("window.fastInjectRestoreDate();")
+    scope.execIsolatedJs {
+        condition("fi_ctx.fastInjectRestoreDate") {
+            execJs("fi_ctx.fastInjectRestoreDate();")
         }.otherWise {
             warn("[FastInject] No Date hack found to restore")
         }

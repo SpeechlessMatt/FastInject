@@ -70,6 +70,7 @@ fun sampleAttributionUsage() {
         val container = findAll("css-main-container")
         log("这是一个日志，这是 container 的长度", container.size)
         container.forEach {
+            log("这是一个日志，这是 container 的 value：", it.value)
             // 以下两者是等价的
             log("这是一个日志，这是 container 的 innerText：", it.text)
             log("这是一个日志，这是 container 的 innerText：", it.innerText)
@@ -93,12 +94,8 @@ fun sampleExecuteJsUsage() {
 
 fun sampleExecuteIsolatedJsUsage() {
     fastInject {
-        execIsolatedJs("let hello_world = 1)")
-        execIsolatedJs("if (window.isReady)") {
-            val btn = find("#submit")
-            btn.click()
-        }
-        execIsolatedJs("setTimeout(() =>", ", 1000)") {
+        execIsolatedJs("let hello_world = 1")
+        execIsolatedJs {
             val btn = find("#submit")
             btn.click()
         }

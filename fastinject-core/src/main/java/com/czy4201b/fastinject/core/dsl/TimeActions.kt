@@ -48,7 +48,7 @@ internal fun TimeRef.performWaitElementThen(
     val elementRef = ElementRef(varName, selector)
 
     scope.execJs(
-        prefix = "window.fastInjectWaitForElement(${selector.toJsLiteral()}, $ms).then(el =>",
+        prefix = "fi_ctx.fastInjectWaitForElement(${selector.toJsLiteral()}, $ms).then(el =>",
         suffix = ").catch(err => console.error('[FastInject] ' + err));"
     ) {
         execJs("const $varName = el;")

@@ -19,7 +19,8 @@ import com.czy4201b.fastinject.core.fastInject
 
 fun sampleDisableTimeCheckUsage() {
     fastInject {
-        disableTimeCheck(1779206400)
+        // 毫秒级别时间戳
+        disableTimeCheck(1779201313000)
 
         // 做一些事情？例如...
         val container = find("css-main-container")

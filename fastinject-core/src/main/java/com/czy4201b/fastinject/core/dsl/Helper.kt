@@ -17,55 +17,58 @@ package com.czy4201b.fastinject.core.dsl
 
 internal object JsHelpers {
     val TIME_CHECK_HELPER = """
-        window.fastInjectTimeCheckHelper = function(targetTs){
-            if (!window.__FastInject_originalDate) {
-                window.__originalDate = Date;
+        fi_ctx.fastInjectTimeCheckHelper = function(targetTs){
+            if (!fi_ctx.__FastInject_originalDate) {
+                fi_ctx.__FastInject_originalDate = Date;
             }
             
-            const RealDate = window.__FastInject_originalDate;
-            window.__FastInject_dateOffset = targetTs - RealDate.now();
+            const RealDate = fi_ctx.__FastInject_originalDate;
+            fi_ctx.__FastInject_dateOffset = targetTs - RealDate.now();
             
-            if (!window.__FastInject_dateHacked) {
-                console.warn('[FastInject] Date already hacked in page, skipping...');
+            if (!fi_ctx.__FastInject_dateHacked) {
                 function FakeDate(...args) {
                     // 构造时直接给 RealDate 注入偏移后的时间值
                     if (this instanceof FakeDate) {
                         if (args.length === 0) {
-                            return new RealDate(RealDate.now() + window.__FastInject_dateOffset);
+                            return new RealDate(RealDate.now() + fi_ctx.__FastInject_dateOffset);
                         } else {
                             return new RealDate(...args);
                         }
                     }
                     // 当作普通函数调用，如 Date()
-                    return new RealDate(RealDate.now() + window.__FastInject_dateOffset).toString();
+                    return new RealDate(RealDate.now() + fi_ctx.__FastInject_dateOffset).toString();
                 }
                 
                 // 保持原型链完整
                 Object.setPrototypeOf(FakeDate, RealDate);
                 FakeDate.prototype = RealDate.prototype;
                 
-                FakeDate.now = () => RealDate.now() + window.__FastInject_dateOffset;
+                FakeDate.now = () => RealDate.now() + fi_ctx.__FastInject_dateOffset;
                 FakeDate.parse = RealDate.parse;
                 FakeDate.UTC   = RealDate.UTC;
+                
+                Object.defineProperty(FakeDate, Symbol.hasInstance, {
+                    value: (instance) => instance instanceof RealDate
+                });
                 
                 // 保留 toString，以减少被工具检测
                 FakeDate.toString = RealDate.toString.bind(RealDate);
                 
                 // Hack now
                 window.Date = FakeDate;
-                window.__FastInject_dateHacked = true;
+                fi_ctx.__FastInject_dateHacked = true;
 
-                window.fastInjectRestoreDate = () => {
-                    window.Date = window.__FastInject_originalDate;
-                    delete window.__FastInject_dateHacked;
-                    delete window.__FastInject_dateOffset;
+                fi_ctx.fastInjectRestoreDate = () => {
+                    window.Date = fi_ctx.__FastInject_originalDate;
+                    delete fi_ctx.__FastInject_dateHacked;
+                    delete fi_ctx.__FastInject_dateOffset;
                 };
             }
         };
     """.trimIndent()
 
     val TIME_HELPER = """
-        window.fastInjectWaitForElement = function(selector, ms) {
+        fi_ctx.fastInjectWaitForElement = function(selector, ms) {
             return new Promise(function (resolve, reject) {
                 var start = Date.now();
 
@@ -83,7 +86,7 @@ internal object JsHelpers {
                     }
                 });
 
-                ob.observe(document.body, { childList: true, subtree: true });
+                ob.observe(document.documentElement, { childList: true, subtree: true });
 
                 setTimeout(function () {
                     ob.disconnect();
@@ -94,7 +97,7 @@ internal object JsHelpers {
     """.trimIndent()
 
     val SIMULATE_INPUT_HELPER = """
-        window.fastInjectSimulateInput = function(el, value) {
+        fi_ctx.fastInjectSimulateInput = function(el, value) {
             if (!el) {
                 console.error('[FastInject] Target Element does not exist in JS context!');
                 return;
@@ -131,7 +134,7 @@ internal object JsHelpers {
     """.trimIndent()
 
     val MEGA_CLICK_HELPER = """
-        window.fastInjectMegaClick = function (el) {
+        fi_ctx.fastInjectMegaClick = function (el) {
             if (!el) return;
 
             const originalStyle = el.style.pointerEvents;

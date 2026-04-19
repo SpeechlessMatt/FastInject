@@ -23,13 +23,5 @@ fun fastInject(block: FastInjectScope.() -> Unit): String {
     scope.block()
     val body = scope.build()
 
-    return """
-        (function() {
-            try {
-                $body
-            } catch (e) {
-                console.error('[FastInject] Error:', e);
-            }
-        })();
-    """.trimIndent()
+    return body
 }

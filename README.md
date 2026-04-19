@@ -107,13 +107,13 @@ fastInject {
 
 | 分类    | 常用方法 / 特性                                                |
 |:------|:---------------------------------------------------------|
-| 元素查找  | find, findAll, wrapElement, wrapElements                 |
-| 变量管理  | kValOf, createVar, ValueRef                              |
+| 元素查找  | find, findAll                                            |
+| 变量管理  | kVarOf, kCreateVar, VarOf, createVar, wrapVar            |
 | 算术运算  | +, -, *, /, % (支持 ValueRef 运算符重载)                        |
 | 逻辑判断  | eq, neq, gt, ge, lt, le (中缀表达式)                          |
 | 流程控制  | condition (if/else 链), ifExists, forEach, forEachIndexed |
 | 属性获取  | size, text, innerText, value                             |
-| 交互模拟  | click, simulateInput, scrollIntoView                     |
+| 交互模拟  | click, simulateInput, input, megaClick                   |
 | 异步/定时 | waitElement, setTimeOut, then, disableTimeCheck          |
 | 日志/注入 | log, execJs, execIsolatedJs                              |
 
