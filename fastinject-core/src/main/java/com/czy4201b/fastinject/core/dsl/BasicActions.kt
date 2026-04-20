@@ -58,6 +58,28 @@ internal fun performExecuteIsolatedJs(scope: FastInjectScope, block: FastInjectS
     }
 }
 
+internal fun performReturn(scope: FastInjectScope, returnVals: Array<out Any>) {
+    val jsArgs = returnVals.joinToString(", ") { msg ->
+        when (msg) {
+            is ElementRef -> msg.varName
+            is ValueRef -> msg.varName
+            else -> msg.toString().toJsLiteral()
+        }
+    }
+
+    val finalJs = if (returnVals.size > 1) "[$jsArgs]" else jsArgs
+    scope.execJs("return $finalJs;")
+}
+
+internal fun performThrow(scope: FastInjectScope, message: Any) {
+    val jsMessage = when (message) {
+        is ValueRef -> message.varName
+        is String -> message.toJsLiteral()
+        else -> message.toString().toJsLiteral()
+    }
+    scope.execJs("throw new Error($jsMessage);")
+}
+
 /**
  * 向浏览器控制台打印日志
  * @param messages 可以是 Kotlin 的 [String]、[Int]，也可以是 [ElementRef] 或 [ValueRef] 等 [JsRef] 的子类

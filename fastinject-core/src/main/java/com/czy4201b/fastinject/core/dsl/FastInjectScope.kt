@@ -15,6 +15,7 @@
  */
 package com.czy4201b.fastinject.core.dsl
 
+import com.czy4201b.fastinject.core.model.ChainRef
 import com.czy4201b.fastinject.core.model.ConditionRef
 import com.czy4201b.fastinject.core.model.DelayRef
 import com.czy4201b.fastinject.core.model.DomRef
@@ -196,6 +197,24 @@ class FastInjectScope {
      */
     fun ConditionRef.otherWise(block: FastInjectScope.() -> Unit) =
         performOtherwise(this@FastInjectScope, block)
+
+    /**
+     * 添加一个return语句，相当于 return retVals
+     *
+     * 多个元素直接返回js数组
+     * @param retVals 可以是 Kotlin 的 [String]、[Int]，也可以是 [ElementRef] 或 [ValueRef] 等 [JsRef] 的子类
+     * @sample com.czy4201b.fastinject.core.samples.sampleReturnUsage
+     */
+    fun ret(vararg retVals: Any) =
+        performReturn(this@FastInjectScope, retVals)
+
+    /**
+     * 添加一个throw语句，相当于 throw new Error(message)
+     * @param message 错误信息
+     * @sample com.czy4201b.fastinject.core.samples.sampleRaiseUsage
+     */
+    fun raise(message: Any) =
+        performThrow(this@FastInjectScope, message)
 
     /**
      * 打印日志 (log 级别)
@@ -408,6 +427,12 @@ class FastInjectScope {
     fun ElementRef.megaClick() = performMegaClick(this@FastInjectScope, this)
 
     /**
+     * 输入回车
+     * @sample com.czy4201b.fastinject.core.samples.sampleElementInputUsage
+     */
+    fun ElementRef.enter() = performEnter(this@FastInjectScope, this)
+
+    /**
      * 模拟用户输入行为
      * @param text 输入的文本
      * @sample com.czy4201b.fastinject.core.samples.sampleElementInputUsage
@@ -469,6 +494,27 @@ class FastInjectScope {
      */
 
     /**
+     * then的链式实现
+     */
+    fun ChainRef.then(block: FastInjectScope.() -> Unit) =
+        performChainThen(this@FastInjectScope, block)
+
+    /**
+     * catch的链式实现
+     * @param block 传入指向异常的 [ValueRef]
+     * @sample com.czy4201b.fastinject.core.samples.sampleSetTimeoutUsage
+     */
+    fun ChainRef.catch(block: FastInjectScope.(ValueRef) -> Unit) =
+        performChainCatch(this@FastInjectScope, block)
+
+    /**
+     * final的链式实现
+     * @sample com.czy4201b.fastinject.core.samples.sampleSetTimeoutUsage
+     */
+    fun ChainRef.finally(block: FastInjectScope.() -> Unit) =
+        performChainFinally(this@FastInjectScope, block)
+
+    /**
      * 创建一个指定毫秒数的延迟引用
      *
      * 此函数不会立即产生阻塞效果，需配合 [.then] 使用来定义延迟后的操作
@@ -479,6 +525,18 @@ class FastInjectScope {
      * @sample com.czy4201b.fastinject.core.samples.sampleSetTimeoutUsage
      */
     fun setTimeOut(ms: Int) = performSetTimeOut(ms)
+
+    /**
+     * 创建一个指定毫秒数的延迟引用
+     *
+     * 此函数不会立即产生阻塞效果，需配合 [.then] 使用来定义延迟后的操作
+     *
+     * 常用于等待页面动画完成、模拟人工操作间隔或处理简单的异步时序
+     * @param ms 延迟的时间，单位为毫秒（1000ms = 1s）
+     * @return 返回一个 [DelayRef] 句柄，用于链式调用 [then]
+     * @sample com.czy4201b.fastinject.core.samples.sampleSetTimeoutUsage
+     */
+    fun ChainRef.setTimeOut(ms: Int) = performChainSetTimeOut(ms)
 
     /**
      * 注册延迟时间到达后的回调逻辑
@@ -500,6 +558,15 @@ class FastInjectScope {
      */
     fun waitElement(selector: String, ms: Int) =
         performWaitElement(this@FastInjectScope, selector, ms)
+
+    /**
+     * 等待 Element 的出现，是异步操作
+     * @param ms 等待的超时时间（毫秒）
+     * @return 返回一个新的 [TimeRef]，用于链式调用或引用等待状态
+     * @sample com.czy4201b.fastinject.core.samples.sampleWaitElementUsage
+     */
+    fun ChainRef.waitElement(selector: String, ms: Int) =
+        performChainWaitElement(this@FastInjectScope, selector, ms)
 
     /**
      * 基于当前的 DomRef 实例等待元素出现，是异步操作

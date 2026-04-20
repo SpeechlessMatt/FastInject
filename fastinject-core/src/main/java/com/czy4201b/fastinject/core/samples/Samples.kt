@@ -54,6 +54,19 @@ fun sampleWrapVarUsage() {
     }
 }
 
+fun sampleReturnUsage() {
+    fastInject {
+        val valueRef = createVar("(100 + 10) / 50 + 1")
+        ret(valueRef)
+    }
+}
+
+fun sampleRaiseUsage() {
+    fastInject {
+        raise("错误了")
+    }
+}
+
 fun sampleLogUsage() {
     fastInject {
         val valueRef = createVar("(100 + 10) / 50 + 1")

@@ -15,7 +15,9 @@
  */
 package com.czy4201b.fastinject.core.model
 
-sealed class AsyncRef
+sealed class AsyncRef {
+    internal var isChained: Boolean = false
+}
 
 class DelayRef(val ms: Int) : AsyncRef()
 
@@ -24,3 +26,5 @@ class TimeRef internal constructor(
     val selector: String,
     val ms: Int,
 ) : AsyncRef()
+
+class ChainRef internal constructor()

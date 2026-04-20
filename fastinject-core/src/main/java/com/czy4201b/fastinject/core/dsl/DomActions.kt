@@ -37,7 +37,12 @@ internal fun performGetElement(
         val childVar = scope.nextElementId()
         scope.execJs("const $childVar = ${parent.varName}[$index];")
         scope.condition("!$childVar") {
-            warn("Index $index out of bounds for", parent.selector.toJsLiteral(), ", length:", "${parent.varName}.length")
+            warn(
+                "Index $index out of bounds for",
+                parent.selector.toJsLiteral(),
+                ", length:",
+                "${parent.varName}.length"
+            )
         }
         ElementRef(childVar, "${parent.selector}[$index]")
     }
@@ -58,7 +63,13 @@ internal fun performGetElement(
         val childVar = scope.nextElementId()
         scope.execJs("const $childVar = ${parent.varName}[${indexRef.varName}];")
         scope.condition("!$childVar") {
-            warn("Index", indexRef, "out of bounds for", parent.selector.toJsLiteral(), "length: ${parent.varName}.length")
+            warn(
+                "Index",
+                indexRef,
+                "out of bounds for",
+                parent.selector.toJsLiteral(),
+                "length: ${parent.varName}.length"
+            )
         }
         ElementRef(childVar, "${parent.selector}[${indexRef.varName}]")
     }
@@ -85,7 +96,11 @@ internal fun performFindElement(
     val elementVar = scope.nextElementId()
     scope.execJs("const $elementVar = ${parent.varName}.querySelector(${selector.toJsLiteral()});")
     scope.condition("!$elementVar") {
-        warn("Element ${parent.varName}.querySelector(", selector, ") does not exist in JS context!")
+        warn(
+            "Element ${parent.varName}.querySelector(",
+            selector,
+            ") does not exist in JS context!"
+        )
     }
 
     return ElementRef(elementVar, selector)
@@ -118,7 +133,11 @@ internal fun performFindAllElements(
     val elementVar = scope.nextElementId()
     scope.execJs("const $elementVar = ${parent.varName}.querySelectorAll(${selector.toJsLiteral()});")
     scope.condition("!$elementVar") {
-        warn("Element ${parent.varName}.querySelectorAll(", selector, ") does not exist in JS context!")
+        warn(
+            "Element ${parent.varName}.querySelectorAll(",
+            selector,
+            ") does not exist in JS context!"
+        )
     }
 
     return ElementsRef(elementVar, selector)
@@ -262,6 +281,19 @@ internal fun performSimulateInput(scope: FastInjectScope, parent: ElementRef, te
 internal fun performSimulateInput(scope: FastInjectScope, parent: ElementRef, text: String) {
     val textRef = scope.kVarOf(text)
     performSimulateInput(scope, parent, textRef)
+}
+
+internal fun performEnter(scope: FastInjectScope, parent: ElementRef) {
+    scope.execIsolatedJs {
+        execJs("const el = ${parent.varName};")
+        condition("!el") {
+            error("Element", parent.varName, "does not exist in JS context!")
+            // return to end the (function() {})();
+            execJs("return;")
+        }
+        execJs("const enterEvent = new KeyboardEvent('keydown', {key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true, cancelable: true});")
+        execJs("el.dispatchEvent(enterEvent);")
+    }
 }
 
 internal fun performClick(scope: FastInjectScope, parent: ElementRef) {

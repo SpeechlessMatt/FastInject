@@ -72,6 +72,7 @@ fun sampleElementInputUsage() {
     fastInject {
         val container = find("css-main-container")
         container.input("hello")
+        container.enter()
     }
 }
 

@@ -6,9 +6,28 @@ import java.io.File
 fun main() {
     val js = fastInject {
         disableTimeCheck(1779201313000)
-        waitElement("container", 5000).then {
-            it.megaClick()
-        }
+        find(".navbar-toggler").click()
+        waitElement("#docsearch-1 > button", 5000)
+            .then { button ->
+                button.click()
+            }
+            .waitElement("#docsearch-input", 5000)
+            .then { inputField ->
+                inputField.simulateInput("Driver Sessions")
+                setTimeOut(2000).then {
+                    inputField.enter()
+                }
+            }
+            .setTimeOut(500)
+            .then {
+                restoreTimeCheck()
+            }
+            .catch {
+                log("错误了:", it)
+            }
+            .finally {
+                log("必然执行的地方")
+            }
     }
 
     val outputFile = File("example/src/main/java/com/czy4201b/example/generated_script.js")

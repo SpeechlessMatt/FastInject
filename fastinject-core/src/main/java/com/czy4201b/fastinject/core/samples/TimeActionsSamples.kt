@@ -33,8 +33,22 @@ fun sampleWaitElementUsage() {
 
 fun sampleSetTimeoutUsage() {
     fastInject {
-        setTimeOut(100).then {
-            log("你好呀")
-        }
+        setTimeOut(100)
+            .then {
+                log("你好吗？")
+                condition("1 + 1 < 2") {
+                    raise("我不好")
+                }
+            }
+            .setTimeOut(100)
+            .then {
+                log("我好呀")
+            }
+            .catch {
+                log(it)
+            }
+            .finally {
+                log("一定会执行吧")
+            }
     }
 }
